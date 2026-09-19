@@ -46,12 +46,20 @@ export default function Dashboard({ goTo }) {
         <div style={{ maxWidth: '900px', margin: '2rem auto', padding: '0 1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1>Tracked Products</h1>
-                <button
-                    onClick={() => goTo('search')}
-                    style={{ background: '#e94560', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px' }}
-                >
-                    + Add Product
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={fetchProducts}
+                        style={{ background: '#1a1a2e', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px' }}
+                    >
+                        ↻ Refresh
+                    </button>
+                    <button
+                        onClick={() => goTo('search')}
+                        style={{ background: '#e94560', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px' }}
+                    >
+                        + Add Product
+                    </button>
+                </div>
             </div>
 
             {products.length === 0 ? (
