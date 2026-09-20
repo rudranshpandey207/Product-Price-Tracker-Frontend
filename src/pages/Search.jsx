@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 
 const API = import.meta.env.VITE_API_URL
@@ -13,63 +13,35 @@ const CATEGORY_ICONS = {
 export default function Search({ goTo }) {
     const [query, setQuery] = useState('')
     const [results, setResults] = useState([])
+    const [loading, setLoading] = useState(false)
     const [tracking, setTracking] = useState({})
     const [error, setError] = useState(null)
     const [searched, setSearched] = useState(false)
-    const [catalogLoading, setCatalogLoading] = useState(true)
-    const catalogRef = useRef([]) // cache all 1000 products in memory
 
-    // Load entire catalog once on mount
-    useEffect(() => {
-        async function loadCatalog() {
+    async function handleSearch() {
+        if (!query.trim()) return
+        setLoading(true)
+        setError(null)
+        setSearched(true)
+        try {
+            const res = await axios.get(`${API}/search`, {
+                params: { q: query },
+                timeout: 60000
+            })
+            setResults(res.data.items || [])
+        } catch (err) {
             try {
                 const res = await axios.get(`${API}/search`, {
-                    params: { q: 'a' }, // broad query to get all products
+                    params: { q: query },
                     timeout: 60000
                 })
-                // This only gets products with 'a' — instead fetch all pages directly
-                await fetchAllProducts()
-            } catch (err) {
-                setError('Could not load product catalog. Try refreshing.')
+                setResults(res.data.items || [])
+                setError(null)
+            } catch (err2) {
+                setError('Search failed. Try again in 30 seconds.')
             }
-            setCatalogLoading(false)
         }
-
-        async function fetchAllProducts() {
-            const allItems = []
-            let page = 1
-            let totalPages = 1
-            while (page <= totalPages) {
-                const res = await axios.get(
-                    `https://demo.inelabteamdev.com/api/catalog?page=${page}&pageSize=50`
-                )
-                totalPages = res.data.pages
-                allItems.push(...res.data.items)
-                page++
-            }
-            catalogRef.current = allItems
-        }
-
-        loadCatalog()
-    }, [])
-
-    function handleSearch() {
-        if (!query.trim()) return
-        setSearched(true)
-        setError(null)
-
-        if (catalogLoading) {
-            setError('Catalog still loading, please wait...')
-            return
-        }
-
-        const q = query.toLowerCase().trim()
-        const filtered = catalogRef.current.filter(item =>
-            item.name.toLowerCase().includes(q) ||
-            item.brand.toLowerCase().includes(q) ||
-            item.category.toLowerCase().includes(q)
-        )
-        setResults(filtered)
+        setLoading(false)
     }
 
     async function handleTrack(item) {
@@ -94,19 +66,15 @@ export default function Search({ goTo }) {
 
     return (
         <div style={{ maxWidth: '780px', margin: '0 auto', padding: '2rem 1rem' }}>
-            {/* Header */}
             <div style={{ marginBottom: '2rem' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.4rem' }}>
                     Search Products
                 </h1>
                 <p style={{ color: '#666', fontSize: '0.95rem' }}>
-                    {catalogLoading
-                        ? '⏳ Loading product catalog...'
-                        : 'Search across 1,000 products from INE\'s mock store'}
+                    Search across 1,000 products from INE's mock store
                 </p>
             </div>
 
-            {/* Search box */}
             <div style={{
                 display: 'flex', gap: '0.75rem', marginBottom: '1.5rem',
                 background: 'white', padding: '0.5rem',
@@ -115,43 +83,26 @@ export default function Search({ goTo }) {
                 <input
                     type="text"
                     value={query}
-                    onChange={e => {
-                        setQuery(e.target.value)
-                        // Live search as user types
-                        if (e.target.value.trim() && !catalogLoading) {
-                            const q = e.target.value.toLowerCase().trim()
-                            const filtered = catalogRef.current.filter(item =>
-                                item.name.toLowerCase().includes(q) ||
-                                item.brand.toLowerCase().includes(q) ||
-                                item.category.toLowerCase().includes(q)
-                            )
-                            setResults(filtered)
-                            setSearched(true)
-                        } else if (!e.target.value.trim()) {
-                            setResults([])
-                            setSearched(false)
-                        }
-                    }}
+                    onChange={e => setQuery(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                    placeholder={catalogLoading ? 'Loading catalog...' : 'Search by name, brand or category...'}
-                    disabled={catalogLoading}
+                    placeholder="Search by name, brand or category..."
                     style={{
                         flex: 1, padding: '0.65rem 1rem', fontSize: '0.95rem',
                         border: 'none', outline: 'none', background: 'transparent',
-                        color: '#1a1a2e', opacity: catalogLoading ? 0.5 : 1
+                        color: '#1a1a2e'
                     }}
                 />
                 <button
                     onClick={handleSearch}
-                    disabled={catalogLoading}
+                    disabled={loading}
                     style={{
-                        background: catalogLoading ? '#ccc' : '#e94560',
+                        background: loading ? '#ccc' : '#e94560',
                         color: 'white', border: 'none',
                         padding: '0.65rem 1.5rem', borderRadius: '8px',
                         fontSize: '0.95rem', fontWeight: '600'
                     }}
                 >
-                    {catalogLoading ? 'Loading...' : 'Search'}
+                    {loading ? 'Searching...' : 'Search'}
                 </button>
             </div>
 
@@ -165,7 +116,7 @@ export default function Search({ goTo }) {
                 </div>
             )}
 
-            {searched && !catalogLoading && (
+            {searched && !loading && (
                 <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
                     {results.length === 0
                         ? 'No products found. Try a different search.'
