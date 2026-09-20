@@ -1,16 +1,73 @@
-# React + Vite
+# Product Price Tracker — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for the Product Price Tracker, built with Vite. Lets users search INE's mock storefront, track products, and view price history and scrape logs over time.
 
-Currently, two official plugins are available:
+## Live URL
+https://product-price-tracker-frontend.vercel.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
+- **Framework:** React + Vite
+- **HTTP Client:** Axios
+- **Charts:** Recharts
+- **Hosting:** Vercel
 
-## React Compiler
+## Setup Instructions
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Clone the repo
+```bash
+git clone https://github.com/rudranshpandey207/Product-Price-Tracker-Frontend.git
+cd Product-Price-Tracker-Frontend
+```
 
-## Expanding the ESLint configuration
+### 2. Install dependencies
+```bash
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 3. Create `.env` file
+VITE_API_URL=http://localhost:3001
+
+For production, set `VITE_API_URL` to your Render backend URL in Vercel's environment variable settings:
+
+VITE_API_URL=https://product-price-tracker-backend-kaqx.onrender.com
+
+
+### 4. Run locally
+```bash
+npm run dev
+```
+
+Open http://localhost:5173
+
+## Pages
+
+### Dashboard
+- Lists all tracked products with latest price, stock status and last scraped time
+- Color coded stock badges — green for in stock, red for out of stock
+- Shows min price, max price, total data points and scrape run count per product
+- Refresh button to reload latest data
+
+### Search
+- Search across all 1,000 products from INE's mock store by name, brand or category
+- Category icons for quick visual identification
+- One click Track button to start tracking a product
+- Tracked state persists across the session
+
+### Product Detail
+- Current price displayed prominently
+- Stats row showing lowest price, highest price, data points and scrape runs
+- Interactive price history line chart with zoomed Y axis (no false ₹0 baseline)
+- Full scrape log table showing every attempt with timestamp, status, attempts, duration and error message
+- Status badges — SUCCESS (green), RETRIED (amber), FAILED (red)
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| VITE_API_URL | Backend API URL — use Render URL in production, localhost:3001 for local dev |
+
+## Notes
+- `VITE_` prefix is required — Vite only exposes env variables with this prefix to the browser
+- Vite bakes env variables in at build time — after changing `.env` on Vercel, redeploy for changes to take effect
+- The frontend has no backend logic — all scraping and database operations happen in the backend repo
+
