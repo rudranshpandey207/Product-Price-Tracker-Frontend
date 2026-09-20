@@ -6,6 +6,7 @@ const API = import.meta.env.VITE_API_URL
 export default function Dashboard({ goTo }) {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
+    const [scraping, setScraping] = useState(false)
 
     useEffect(() => { fetchProducts() }, [])
 
@@ -20,6 +21,21 @@ export default function Dashboard({ goTo }) {
         setLoading(false)
     }
 
+    async function handleForceScrape() {
+        setScraping(true)
+        try {
+            await axios.post(`${API}/scrape/run`)
+            // Wait 60 seconds then refresh — scraping takes time
+            setTimeout(async () => {
+                await fetchProducts()
+                setScraping(false)
+            }, 60000)
+        } catch (err) {
+            alert('Scrape trigger failed')
+            setScraping(false)
+        }
+    }
+
     async function handleRemove(productId) {
         if (!confirm('Stop tracking this product?')) return
         try {
@@ -31,7 +47,6 @@ export default function Dashboard({ goTo }) {
     }
 
     const scraped = products.filter(p => p.latestPrice)
-    const notScraped = products.filter(p => !p.latestPrice)
 
     if (loading) return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -70,6 +85,18 @@ export default function Dashboard({ goTo }) {
                         ↻ Refresh
                     </button>
                     <button
+                        onClick={handleForceScrape}
+                        disabled={scraping}
+                        style={{
+                            background: scraping ? '#ccc' : '#1a1a2e',
+                            border: 'none', color: 'white',
+                            padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.9rem',
+                            fontWeight: '500', cursor: scraping ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        {scraping ? '⏳ Scraping...' : '⚡ Force Scrape'}
+                    </button>
+                    <button
                         onClick={() => goTo('search')}
                         style={{
                             background: '#e94560', border: 'none', color: 'white',
@@ -81,6 +108,17 @@ export default function Dashboard({ goTo }) {
                     </button>
                 </div>
             </div>
+
+            {/* Scraping notice */}
+            {scraping && (
+                <div style={{
+                    background: '#fffbeb', border: '1px solid #fde68a',
+                    borderRadius: '8px', padding: '0.75rem 1rem',
+                    marginBottom: '1.5rem', color: '#b45309', fontSize: '0.9rem'
+                }}>
+                    ⚡ Scraping all products in the background — prices will update in about 60 seconds. Click Refresh when done.
+                </div>
+            )}
 
             {products.length === 0 ? (
                 <div style={{
@@ -126,7 +164,9 @@ function ProductCard({ product, onView, onRemove }) {
     function stockBadge() {
         if (!isScraped) return { label: 'Not scraped yet', color: '#999', bg: '#f5f5f5' }
         if (product.latestStockStatus === 'IN_STOCK') return {
-            label: product.latestStockCount ? `In Stock · ${product.latestStockCount} left` : 'In Stock',
+            label: product.latestStockCount
+                ? `In Stock · ${product.latestStockCount} left`
+                : 'In Stock',
             color: '#15803d', bg: '#f0fdf4'
         }
         if (product.latestStockStatus === 'OUT_OF_STOCK') return {
@@ -141,8 +181,7 @@ function ProductCard({ product, onView, onRemove }) {
         <div style={{
             background: 'white', borderRadius: '12px',
             border: '1px solid #eee', overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            transition: 'box-shadow 0.2s'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
         }}>
             <div style={{ padding: '1.25rem 1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
