@@ -24,10 +24,22 @@ export default function Search({ goTo }) {
         setError(null)
         setSearched(true)
         try {
-            const res = await axios.get(`${API}/search`, { params: { q: query } })
+            const res = await axios.get(`${API}/search`, {
+                params: { q: query },
+                timeout: 60000
+            })
             setResults(res.data.items || [])
         } catch (err) {
-            setError('Search failed. Is the backend running?')
+            // Retry once — Render may have been sleeping
+            try {
+                const res = await axios.get(`${API}/search`, {
+                    params: { q: query },
+                    timeout: 60000
+                })
+                setResults(res.data.items || [])
+            } catch (err2) {
+                setError('Search failed. Backend may be waking up — try again in 30 seconds.')
+            }
         }
         setLoading(false)
     }
@@ -123,15 +135,15 @@ export default function Search({ goTo }) {
                         background: 'white', padding: '1rem 1.25rem',
                         borderRadius: '10px', border: '1px solid #eee',
                         display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'center', transition: 'box-shadow 0.2s',
+                        alignItems: 'center',
                         boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
                             <div style={{
                                 width: '40px', height: '40px', borderRadius: '10px',
                                 background: '#f0f2f5', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-                                flexShrink: 0
+                                alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.2rem', flexShrink: 0
                             }}>
                                 {icon(item.category)}
                             </div>
